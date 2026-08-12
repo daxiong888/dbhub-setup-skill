@@ -42,7 +42,7 @@ SkillHub 提供国内下载。把下面这句话发给 AI 助手：
 把下面这段话发给 AI 助手：
 
 ```text
-Run `npx skills use "https://github.com/daxiong888/dbhub-setup-skill" --skill "dbhub-setup"` and follow the generated skill instructions now. Read its complete output, redirecting it to a temporary file first if necessary. Resolve relative paths from the supporting-files directory it provides.
+请运行 `npx skills use "https://github.com/daxiong888/dbhub-setup-skill" --skill "dbhub-setup"`，然后立即按照生成的 Skill 指令执行。请完整读取命令输出；如有必要，先将输出重定向到临时文件。相关文件的相对路径应以命令提供的 supporting-files 目录为基准解析。
 ```
 
 如果想自己在终端安装：
