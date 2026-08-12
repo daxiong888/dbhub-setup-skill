@@ -2,6 +2,8 @@
 
 [![skills.sh](https://skills.sh/b/daxiong888/dbhub-setup-skill)](https://skills.sh/daxiong888/dbhub-setup-skill/dbhub-setup)
 
+[中国大陆用户可通过腾讯云 SkillHub 安装](https://skillhub.cn/skills/user_ad7d2e16/dbhub-setup)
+
 Set up DBHub MCP in Codex for multiple local, test, and production databases. Passwords stay in macOS Keychain; SQL tools are read-only by default.
 
 给 Codex 配置 [DBHub](https://github.com/bytebase/dbhub) MCP，接入本地、测试和生产环境中的多个数据库。密码保存在 macOS Keychain，SQL 工具默认只读。
@@ -16,12 +18,24 @@ Set up DBHub MCP in Codex for multiple local, test, and production databases. Pa
 `maintainer/` 是仓库级工具，不会被 `skills.sh` 安装。clone 仓库后就可以运行，没有额外的身份限制。
 
 > [!IMPORTANT]
-> 目前验证过的组合是 **macOS + OpenAI Codex**。Windows、Linux 和其他 Agent 需要换掉 Keychain 与项目级 MCP 配置，并重新测试。
+> 目前验证过的组合是 **macOS + OpenAI Codex**，运行时需要 Python 3.10+ 和 Node.js（含 npm/npx）。Windows、Linux 和其他 Agent 需要换掉 Keychain 与项目级 MCP 配置，并重新测试。
 
 > [!WARNING]
 > `readonly = true` 是 DBHub 的应用层限制，不能代替数据库只读账号。MCP 能启动，也不代表已经连上真实数据库。
 
 ## 安装 Skill
+
+### 中国大陆
+
+SkillHub 提供国内下载。将下面这句话发给支持 Skill 安装的 AI 助手：
+
+```text
+请根据 https://skillhub.cn/install/skillhub.md，安装 @user_ad7d2e16/dbhub-setup。
+```
+
+也可以先查看 [SkillHub 上的 dbhub-setup](https://skillhub.cn/skills/user_ad7d2e16/dbhub-setup)。
+
+### GitHub
 
 ```bash
 npx skills add daxiong888/dbhub-setup-skill \
