@@ -1,5 +1,7 @@
 # DBHub Setup Skill
 
+[![skills.sh](https://skills.sh/b/daxiong888/dbhub-setup-skill)](https://skills.sh/daxiong888/dbhub-setup-skill/dbhub-setup)
+
 把 [DBHub](https://github.com/bytebase/dbhub) 更省事、更稳妥地用进真实项目。
 
 DBHub 负责连接和查询数据库；这个 Skill 负责降低 DBHub 的设置与项目接入门槛，包括多套环境、多个数据库、macOS Keychain 凭据、只读工具、稳定版本资格检查和后续项目升级。
