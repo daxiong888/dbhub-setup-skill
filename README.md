@@ -23,11 +23,13 @@ Set up DBHub MCP in Codex for multiple local, test, and production databases. Pa
 > [!WARNING]
 > `readonly = true` 是 DBHub 的应用层限制，不能代替数据库只读账号。MCP 能启动，也不代表已经连上真实数据库。
 
-## 安装 Skill
+## 让 AI 安装 Skill
 
-### 中国大陆
+下面两种方式都是把提示词发给 AI 助手，由 AI 自己完成安装。中国大陆用户优先使用 SkillHub。
 
-SkillHub 提供国内下载。将下面这句话发给支持 Skill 安装的 AI 助手：
+### 中国大陆：SkillHub
+
+SkillHub 提供国内下载。把下面这句话发给 AI 助手：
 
 ```text
 请根据 https://skillhub.cn/install/skillhub.md，安装 @user_ad7d2e16/dbhub-setup。
@@ -37,13 +39,13 @@ SkillHub 提供国内下载。将下面这句话发给支持 Skill 安装的 AI 
 
 ### GitHub / skills.sh
 
-临时加载并立即使用：
+把下面这段话发给 AI 助手：
 
 ```text
 Run `npx skills use "https://github.com/daxiong888/dbhub-setup-skill" --skill "dbhub-setup"` and follow the generated skill instructions now. Read its complete output, redirecting it to a temporary file first if necessary. Resolve relative paths from the supporting-files directory it provides.
 ```
 
-需要持久安装到 Codex 时：
+如果想自己在终端安装：
 
 ```bash
 npx skills add daxiong888/dbhub-setup-skill \
