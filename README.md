@@ -35,7 +35,15 @@ SkillHub 提供国内下载。将下面这句话发给支持 Skill 安装的 AI 
 
 也可以先查看 [SkillHub 上的 dbhub-setup](https://skillhub.cn/skills/user_ad7d2e16/dbhub-setup)。
 
-### GitHub
+### GitHub / skills.sh
+
+临时加载并立即使用：
+
+```text
+Run `npx skills use "https://github.com/daxiong888/dbhub-setup-skill" --skill "dbhub-setup"` and follow the generated skill instructions now. Read its complete output, redirecting it to a temporary file first if necessary. Resolve relative paths from the supporting-files directory it provides.
+```
+
+需要持久安装到 Codex 时：
 
 ```bash
 npx skills add daxiong888/dbhub-setup-skill \
