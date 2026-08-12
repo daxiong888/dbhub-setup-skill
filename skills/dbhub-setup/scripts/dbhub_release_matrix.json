@@ -1,0 +1,116 @@
+{
+  "schema_version": 1,
+  "matrix_version": "2026-07-31",
+  "known_limitations": [
+    "DBHub readonly is an application-layer SQL classifier, not a replacement for database least-privilege accounts.",
+    "This qualification proves ordinary write rejection but does not claim that every SELECT-invocable database function is side-effect-free."
+  ],
+  "matrix": [
+    {
+      "id": "mysql-5.7.44",
+      "connector": "mysql",
+      "database_version": "5.7.44",
+      "expected_version_pattern": "^5\\.7\\.44(?:[-.]|$)",
+      "display_image": "mysql:5.7.44",
+      "image": "mysql@sha256:4bc6bc963e6d8443453676cae56536f4b8156d78bae03c0145cbe47c2aad73bb",
+      "image_id": "sha256:5107333e08a87b836d48ff7528b1e84b9c86781cc9f1748bbc1b8c42a870d933",
+      "platform": "linux/amd64",
+      "required": true
+    },
+    {
+      "id": "mysql-8.0.43",
+      "connector": "mysql",
+      "database_version": "8.0.43",
+      "expected_version_pattern": "^8\\.0\\.43(?:[-.]|$)",
+      "display_image": "mysql:8.0.43",
+      "image": "mysql@sha256:3e646bcda0d9448ffa3d2024eef04e1bca95528ec19b9e8b76749da9d97d4a10",
+      "image_id": "sha256:f53ed023c640f3691333cfaab5b10885e657c868d70ef9aaa5986cfa5c5de5b2",
+      "platform": "linux/arm64",
+      "required": true
+    },
+    {
+      "id": "mysql-8.4.10",
+      "connector": "mysql",
+      "database_version": "8.4.10",
+      "expected_version_pattern": "^8\\.4\\.10(?:[-.]|$)",
+      "display_image": "mysql:8.4.10",
+      "image": "mysql@sha256:8dbcf531a03aade657e181b9cf2f1d1803ce621a1d55610cb44cb531ab7d7db6",
+      "image_id": "sha256:54a7dd40c90b401f61ecf5929d9431b790e86ee3ce5ed6e041040100e1250f72",
+      "platform": "linux/arm64",
+      "required": true
+    },
+    {
+      "id": "mysql-9.7.1",
+      "connector": "mysql",
+      "database_version": "9.7.1",
+      "expected_version_pattern": "^9\\.7\\.1(?:[-.]|$)",
+      "display_image": "mysql:9.7.1",
+      "image": "mysql@sha256:cbade841779f1661300e705721f9d2ff159865cc7a8a291affbff43ac6ec7f1d",
+      "image_id": "sha256:76523493e38cb86bb386443d939c6c878aaf20c34f598765355a17b05fdd71fe",
+      "platform": "linux/arm64",
+      "required": true
+    },
+    {
+      "id": "mariadb-10.11",
+      "connector": "mariadb",
+      "database_version": "10.11",
+      "expected_version_pattern": "^10\\.11\\.",
+      "display_image": "mariadb:10.11",
+      "image": "public.ecr.aws/docker/library/mariadb@sha256:be981e4113326ada8d6004174dd09eeaefc03094037f811182a52d4f2e737350",
+      "image_id": "sha256:689d1fe65beee918e6c8e5dc7990991f4af3bb9486251e6323143c59250693b9",
+      "platform": "linux/arm64",
+      "required": true
+    },
+    {
+      "id": "postgres-15",
+      "connector": "postgres",
+      "database_version": "15",
+      "expected_version_pattern": "^15\\.",
+      "display_image": "postgres:15-alpine",
+      "image": "postgres@sha256:3d0f7584ed7d04e27fa050d6683a74746608faf21f202be78460d679cc56461f",
+      "image_id": "sha256:25464d6a8b69ae7001dda8527e24b201f90b5391f686d6ea324913c92b81eae7",
+      "platform": "linux/arm64",
+      "required": true
+    },
+    {
+      "id": "postgres-16",
+      "connector": "postgres",
+      "database_version": "16",
+      "expected_version_pattern": "^16\\.",
+      "display_image": "postgres:16",
+      "image": "postgres@sha256:468e1f126ca5af849799cda06ac9b03d8090aae9fa5163408b3e8da44fad0702",
+      "image_id": "sha256:a607e8bb5b2b78bd231549d9d8d9cc8aa86458802d7974e331e42d8614fe0602",
+      "platform": "linux/arm64",
+      "required": true
+    },
+    {
+      "id": "postgres-17",
+      "connector": "postgres",
+      "database_version": "17",
+      "expected_version_pattern": "^17\\.",
+      "display_image": "postgres:17-alpine",
+      "image": "postgres@sha256:742f40ea20b9ff2ff31db5458d127452988a2164df9e17441e191f3b72252193",
+      "image_id": "sha256:8ee7c900f4de054e8f0a3b42b8f5da38b8fba57c3ccd7c1a02be28cb0b06494f",
+      "platform": "linux/arm64",
+      "required": true
+    },
+    {
+      "id": "sqlserver-2019",
+      "connector": "sqlserver",
+      "database_version": "2019",
+      "expected_version_pattern": "^15\\.",
+      "display_image": "mcr.microsoft.com/mssql/server:2019-latest",
+      "image": "mcr.microsoft.com/mssql/server@sha256:46f719fd3457d4e7e8e5845fe00c35c20e7bae7ff1e8b9fe595f2a81029f5ba8",
+      "image_id": "sha256:419222bc7e983454b626d535a989728c49c796c9bf50e96077f453fa47f0f4b3",
+      "platform": "linux/amd64",
+      "required": true
+    },
+    {
+      "id": "sqlite-node",
+      "connector": "sqlite",
+      "database_version": "Node.js bundled SQLite",
+      "expected_version_pattern": "^\\d+\\.\\d+\\.\\d+",
+      "required": true
+    }
+  ]
+}

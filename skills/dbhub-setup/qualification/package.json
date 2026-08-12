@@ -1,0 +1,16 @@
+{
+  "name": "dbhub-release-qualification-harness",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@modelcontextprotocol/client": "2.0.0",
+    "@testcontainers/mariadb": "11.0.3",
+    "@testcontainers/mssqlserver": "11.0.3",
+    "@testcontainers/mysql": "11.0.3",
+    "@testcontainers/postgresql": "11.0.3"
+  },
+  "overrides": {
+    "uuid": "11.1.1"
+  }
+}

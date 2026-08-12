@@ -1,0 +1,17 @@
+.DS_Store
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+node_modules/
+
+# Runtime qualification state and generated project configuration must never
+# be committed. They may contain internal endpoints or local machine state.
+.codex/state/dbhub-setup/
+.codex/dbhub/
+.codex/config.toml
+
+# Local test and packaging outputs.
+dist/
+tmp/
+*.log

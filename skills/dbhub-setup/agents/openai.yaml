@@ -1,0 +1,4 @@
+interface:
+  display_name: "DBHub Release & Setup"
+  short_description: "稳定版资格检查、轻量项目升级与安全连接配置"
+  default_prompt: "Use $dbhub-setup to check and qualify exact stable DBHub releases in a projectless local matrix, reuse the locked runtime for project upgrades, or configure secure Keychain-backed project connections without plaintext passwords."
