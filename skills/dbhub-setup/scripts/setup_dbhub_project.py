@@ -27,9 +27,8 @@ MCP_HEADER = "[mcp_servers.dbhub]"
 MYSQL_TIMEZONE_PATTERN = re.compile(r"^(?:local|Z|[+-]\d\d:\d\d)$")
 DEFAULT_MYSQL_TIMEZONE = "+08:00"
 DBHUB_VERSION_PATTERN = re.compile(r"^\d+\.\d+\.\d+$")
-QUALIFIED_RUNNER_PATH = Path(__file__).resolve().parent / "run_qualified_dbhub.py"
-QUALIFICATION_STATE_DIR = Path.home() / ".codex/state/dbhub-setup"
-PYTHON_EXECUTABLE = Path(shutil.which("python3") or sys.executable).resolve()
+VERIFIED_DBHUB_VERSION = "1.2.0"
+OFFICIAL_NPM_REGISTRY = "https://registry.npmjs.org"
 
 
 @dataclass(frozen=True)
@@ -73,7 +72,7 @@ def parse_source(raw: str) -> Source:
         raise argparse.ArgumentTypeError(f"invalid database type {db_type!r}")
     if db_type.lower() not in ALLOWED_SOURCE_TYPES:
         raise argparse.ArgumentTypeError(
-            f"unsupported qualified database type {db_type!r}"
+            f"unsupported database type {db_type!r}"
         )
     if any(not value for value in (host, database, user, label)):
         raise argparse.ArgumentTypeError(
@@ -166,6 +165,7 @@ def render_launcher(
     dbhub_version: str,
     keychain_service: str,
     config_sha256: str,
+    npx_executable: Path,
 ) -> str:
     source_list = list(sources)
     load_blocks: list[str] = []
@@ -178,21 +178,33 @@ def render_launcher(
         for block in load_blocks
     )
     return f"""#!/bin/zsh
-# dbhub-setup-launcher-schema: 2
+# dbhub-setup-launcher-schema: 3
 
 set -eu
 
 readonly SCRIPT_DIR="${{0:A:h}}"
 readonly CONFIG_PATH="${{SCRIPT_DIR}}/dbhub.toml"
 readonly KEYCHAIN_SERVICE={shlex.quote(keychain_service)}
-readonly QUALIFIED_RUNNER={shlex.quote(str(QUALIFIED_RUNNER_PATH))}
-readonly QUALIFICATION_STATE_DIR={shlex.quote(str(QUALIFICATION_STATE_DIR))}
-readonly PYTHON_EXECUTABLE={shlex.quote(str(PYTHON_EXECUTABLE))}
+readonly NPX_EXECUTABLE={shlex.quote(str(npx_executable))}
+readonly DBHUB_PACKAGE={shlex.quote(f'@bytebase/dbhub@{dbhub_version}')}
+readonly EXPECTED_CONFIG_SHA256={shlex.quote(config_sha256)}
 
 if [[ ! -r "${{CONFIG_PATH}}" ]]; then
   print -u2 -- "DBHub config is not readable: ${{CONFIG_PATH}}"
   exit 1
 fi
+
+if [[ ! -x "${{NPX_EXECUTABLE}}" ]]; then
+  print -u2 -- "npx is not executable: ${{NPX_EXECUTABLE}}"
+  exit 1
+fi
+
+actual_config_sha256="$(/usr/bin/shasum -a 256 "${{CONFIG_PATH}}" | /usr/bin/awk '{{print $1}}')"
+if [[ "${{actual_config_sha256}}" != "${{EXPECTED_CONFIG_SHA256}}" ]]; then
+  print -u2 -- "DBHub config hash does not match the generated launcher; regenerate the project setup."
+  exit 1
+fi
+unset actual_config_sha256
 
 load_keychain_password() {{
   local keychain_account="$1"
@@ -247,32 +259,18 @@ load_all_passwords() {{
 {keychain_loads}
 }}
 
+load_all_passwords
+
 if [[ "${{DBHUB_LAUNCHER_CHECK_ONLY:-0}}" == "1" ]]; then
-  load_all_passwords
-  print -- "DBHub launcher check passed: required passwords were loaded without printing them."
+  print -- "DBHub launcher check passed: config integrity and required passwords were verified without printing secrets."
   exit 0
 fi
 
-if [[ ! -r "${{QUALIFIED_RUNNER}}" ]]; then
-  print -u2 -- "DBHub qualified runtime runner is not readable: ${{QUALIFIED_RUNNER}}"
-  exit 1
-fi
-
-# DBHUB_QUALIFIED_PREFLIGHT_BEGIN
-"${{PYTHON_EXECUTABLE}}" "${{QUALIFIED_RUNNER}}" \\
-  --version {shlex.quote(dbhub_version)} \\
-  --state-dir "${{QUALIFICATION_STATE_DIR}}" \\
-  --expected-config-sha256 {shlex.quote(config_sha256)} \\
-  --validate-config "${{CONFIG_PATH}}"
-# DBHUB_QUALIFIED_PREFLIGHT_END
-
-load_all_passwords
-
-exec "${{PYTHON_EXECUTABLE}}" "${{QUALIFIED_RUNNER}}" \\
-  --version {shlex.quote(dbhub_version)} \\
-  --state-dir "${{QUALIFICATION_STATE_DIR}}" \\
-  --expected-config-sha256 {shlex.quote(config_sha256)} \\
-  -- \\
+exec "${{NPX_EXECUTABLE}}" \\
+  --yes \\
+  --registry={OFFICIAL_NPM_REGISTRY} \\
+  --ignore-scripts \\
+  "${{DBHUB_PACKAGE}}" \\
   --transport stdio \\
   --config="${{CONFIG_PATH}}"
 """
@@ -444,13 +442,16 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--project-root", required=True, type=Path)
     parser.add_argument("--source", required=True, action="append", type=parse_source)
-    parser.add_argument("--dbhub-version", required=True)
+    parser.add_argument(
+        "--dbhub-version",
+        default=VERIFIED_DBHUB_VERSION,
+        help=(
+            f"exact DBHub version to run (default: verified {VERIFIED_DBHUB_VERSION})"
+        ),
+    )
     parser.add_argument(
         "--npm-registry",
-        help=(
-            "Deprecated for setup: qualify releases with manage_dbhub_release.py "
-            "and its --registry option instead."
-        ),
+        help="unsupported; the generated launcher always uses the official npm registry",
     )
     parser.add_argument("--max-rows", type=int, default=1000)
     parser.add_argument("--connection-timeout", type=int, default=10)
@@ -479,8 +480,8 @@ def main() -> int:
         )
     if args.npm_registry is not None:
         raise RuntimeError(
-            "--npm-registry is no longer a launcher option; use "
-            "manage_dbhub_release.py check/qualify --registry instead"
+            "--npm-registry is not supported; public setup uses only the "
+            "official npm registry"
         )
     if not MYSQL_TIMEZONE_PATTERN.fullmatch(args.mysql_timezone):
         raise RuntimeError(
@@ -494,6 +495,10 @@ def main() -> int:
         raise RuntimeError(
             "--keychain-service must use only letters, digits, '.', '_' or '-'"
         )
+    npx_path = shutil.which("npx")
+    if npx_path is None:
+        raise RuntimeError("npx was not found; install Node.js and npm before setup")
+    npx_executable = Path(npx_path).resolve()
 
     codex_config_path = project_root / ".codex" / "config.toml"
     dbhub_dir = project_root / ".codex" / "dbhub"
@@ -534,6 +539,7 @@ def main() -> int:
         config_sha256=hashlib.sha256(
             dbhub_config.encode("utf-8")
         ).hexdigest(),
+        npx_executable=npx_executable,
     )
 
     summary = {
@@ -572,7 +578,8 @@ def main() -> int:
         "git_exclude": "skipped" if args.no_git_exclude else "project-local .codex/",
         "replacement_required": replacement_required,
         "dbhub_version": args.dbhub_version,
-        "runtime_mode": "qualified",
+        "dbhub_version_verified": args.dbhub_version == VERIFIED_DBHUB_VERSION,
+        "runtime_mode": "npx-exact",
     }
 
     if not args.dry_run:

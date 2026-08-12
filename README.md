@@ -2,63 +2,26 @@
 
 [![skills.sh](https://skills.sh/b/daxiong888/dbhub-setup-skill)](https://skills.sh/daxiong888/dbhub-setup-skill/dbhub-setup)
 
-把 [DBHub](https://github.com/bytebase/dbhub) 更省事、更稳妥地用进真实项目。
+Set up DBHub MCP in Codex for multiple local, test, and production databases. Passwords stay in macOS Keychain; SQL tools are read-only by default.
 
-DBHub 负责连接和查询数据库；这个 Skill 负责降低 DBHub 的设置与项目接入门槛，包括多套环境、多个数据库、macOS Keychain 凭据、只读工具、稳定版本资格检查和后续项目升级。
+给 Codex 配置 [DBHub](https://github.com/bytebase/dbhub) MCP，接入本地、测试和生产环境中的多个数据库。密码保存在 macOS Keychain，SQL 工具默认只读。
+
+这个仓库有两部分：
+
+| 你想做什么 | 从哪里开始 |
+| --- | --- |
+| 在 Codex 项目里接入 DBHub | 安装 `skills/dbhub-setup/` |
+| 自己检查 DBHub 官方稳定版 | clone 仓库，运行 `maintainer/` 下的工具 |
+
+`maintainer/` 是仓库级工具，不会被 `skills.sh` 安装。clone 仓库后就可以运行，没有额外的身份限制。
 
 > [!IMPORTANT]
-> 当前只在 **macOS + OpenAI Codex** 上完成验证。其他操作系统或 Agent 可以参考并改造这套流程，但凭据存储、Skill 路径和项目级 MCP 配置必须按目标平台重新验证。
+> 目前验证过的组合是 **macOS + OpenAI Codex**。Windows、Linux 和其他 Agent 需要换掉 Keychain 与项目级 MCP 配置，并重新测试。
 
 > [!WARNING]
-> DBHub 的 `readonly = true` 是应用层护栏，不能替代数据库级只读账号和最小权限。本 Skill 也不会把“能初始化 MCP”表述成“已经成功登录真实数据库”。
+> `readonly = true` 是 DBHub 的应用层限制，不能代替数据库只读账号。MCP 能启动，也不代表已经连上真实数据库。
 
-## 它解决什么
-
-一个真实项目通常不止一个数据库，也不止一套环境：
-
-```mermaid
-flowchart LR
-    C["Codex"] --> S["DBHub Setup Skill<br/>配置与检查"]
-    S --> D["DBHub<br/>连接与查询"]
-    D --> L["LOCAL<br/>多个数据库"]
-    D --> U["UAT<br/>多个数据库"]
-    D --> P["PROD<br/>多个数据库"]
-    K["macOS Keychain<br/>数据库密码"] --> D
-```
-
-这个 Skill 可以：
-
-- 生成项目级 `.codex/config.toml` 和 DBHub TOML；
-- 为多环境、多数据库生成明确命名的 MCP 工具；
-- 将数据库密码留在 macOS Keychain，不写进项目文件或 AI 会话；
-- 配置 `lazy = true`、`readonly = true` 和有上限的 `max_rows`；
-- 在写入前生成 dry-run 计划，发现缺失凭据或冲突配置时停止；
-- 对 DBHub 精确稳定版本运行固定的本地资格矩阵；
-- 复用已验收、已锁定的运行环境，为项目执行轻量升级。
-
-它不会：
-
-- 替代 DBHub；
-- 修改数据库授权或自动创建只读账号；
-- 自动连接 UAT、生产或其他私有数据库；
-- 把应用层只读限制宣传成完整的数据库安全边界；
-- 声称已经验证 Windows、Linux、Claude Code、Cursor 等其他组合。
-
-## 已验证范围
-
-| 项目 | 状态 |
-| --- | --- |
-| macOS | 已验证 |
-| OpenAI Codex | 已验证 |
-| DBHub 多数据源项目配置 | 已验证 |
-| macOS Keychain 凭据 | 已验证 |
-| SQLite、PostgreSQL、MySQL、MariaDB、SQL Server 本地资格矩阵 | 已验证流程 |
-| Windows / Linux 凭据存储 | 未验证，需要适配 |
-| Claude Code / Cursor / 其他 Agent | 未验证，需要适配 |
-
-## 安装
-
-通过 `skills` CLI 安装到 Codex 全局 Skill 目录：
+## 安装 Skill
 
 ```bash
 npx skills add daxiong888/dbhub-setup-skill \
@@ -67,78 +30,124 @@ npx skills add daxiong888/dbhub-setup-skill \
   --global
 ```
 
-只查看仓库中可安装的 Skill：
+只查看仓库里有哪些 Skill：
 
 ```bash
 npx skills add daxiong888/dbhub-setup-skill --list
 ```
 
-安装后可以这样使用：
+安装后可以在目标项目里这样说：
 
 ```text
-使用 $dbhub-setup，先检查这个项目现有的 DBHub 配置，
-然后为 LOCAL、UAT 和 PROD 的多个数据库生成 dry-run 计划。
-不要读取或输出任何数据库密码。
+使用 $dbhub-setup，先检查这个项目现有的 Codex 和 DBHub 配置，
+再为 LOCAL、UAT 和 PROD 的多个数据库生成 dry-run。
+不要读取、输出或保存任何数据库密码。
 ```
 
-或者：
+Skill 会先检查 Git 状态和已有配置，再收集数据库类型、地址、库名、用户名、环境名等非敏感信息。确认 dry-run 后，它会生成：
 
 ```text
-使用 $dbhub-setup 检查 DBHub 当前官方稳定版。
-不要访问任何业务项目、Keychain 或真实数据库。
+<project>/.codex/config.toml
+<project>/.codex/dbhub/dbhub.toml
+<project>/.codex/dbhub/start-dbhub.zsh
 ```
 
-## 工作方式
+密码不写入这些文件。启动器从 macOS Keychain 读取密码，每个数据源默认启用 `lazy = true`；`execute_sql` 默认是只读模式，并限制单次返回行数。生成器还会把 `.codex/` 加入当前仓库的 `.git/info/exclude`，避免本地数据库地址和用户名误入提交。
 
-### 项目接入
+除非你明确授权，Skill 不会连接 UAT、生产环境或其他私有数据库。它也不会创建数据库账号、修改授权或执行迁移。
 
-1. 检查现有项目配置和 Git 状态；
-2. 收集数据库类型、地址、端口、库名、用户名、环境名等非敏感信息；
-3. 生成 dry-run 计划；
-4. 只检查 Keychain 条目是否存在，不读取密码；
-5. 缺少密码时，由用户在终端隐藏输入；
-6. 生成项目级配置和启动器；
-7. 使用虚拟密码验证文件、权限、lazy 启动和工具注册；
-8. 只有得到明确授权后，才对真实数据库执行连接检查。
+## 当前验证版本
 
-### 稳定版资格检查
+公开 Skill 默认使用：
 
-1. 从官方 npm registry 获取精确稳定版本元数据；
-2. 校验包名、版本、integrity、shasum 和下载产物；
-3. 锁定依赖闭包；
-4. 在固定的本地数据库镜像矩阵中验证核心契约；
-5. 生成可复用的资格凭据；
-6. 项目升级复用已验证运行环境，不在每个项目重复下载和解析依赖。
+```text
+@bytebase/dbhub@1.2.0
+```
 
-## 开发与测试
+仓库中的资格矩阵已经检查过 DBHub `1.2.0` 在 SQLite、PostgreSQL、MySQL、MariaDB 和 SQL Server 上的核心行为。项目生成器也允许指定其他精确的 `X.Y.Z` 稳定版本，但会将其标记为未验证。
 
-运行 Python 测试：
+`latest`、版本范围、预发布版本、URL 和任意 npm spec 都不会被接受。启动器只使用官方 npm registry，并禁用 npm lifecycle scripts；首次启动时可能需要联网下载精确版本。
+
+## 自己检查 DBHub 稳定版
+
+先 clone 仓库：
+
+```bash
+git clone https://github.com/daxiong888/dbhub-setup-skill.git
+cd dbhub-setup-skill
+```
+
+资格工具的 Node.js 依赖锁在 `package-lock.json` 中：
+
+```bash
+cd maintainer/qualification
+npm ci --ignore-scripts
+cd ../..
+```
+
+只查询官方 npm 元数据，并检查本地是否已有可复用的资格凭据：
+
+```bash
+python3 maintainer/scripts/manage_dbhub_release.py check
+```
+
+这条命令不会下载 DBHub，也不会启动 Docker。想在需要时继续跑完整矩阵，使用：
+
+```bash
+python3 maintainer/scripts/manage_dbhub_release.py qualify
+```
+
+`qualify` 也会先做轻量检查。只有发现新稳定版、当前资格输入发生变化，或之前的运行没有完成时，才会下载精确的官方 npm artifact 并启动本地矩阵。
+
+完整矩阵需要本地 Docker，以及 [dbhub_release_matrix.json](maintainer/scripts/dbhub_release_matrix.json) 中列出的镜像。脚本不会自行执行 `docker pull`。缺少镜像时会返回 `blocked`，由你决定是否手动准备对应的精确镜像。
+
+常见状态：
+
+| 状态 | 含义 |
+| --- | --- |
+| `up_to_date` | 已有资格凭据可以复用，没有重跑矩阵 |
+| `qualification_required` | 需要运行完整矩阵 |
+| `qualified` | 当前矩阵全部通过 |
+| `partially_qualified` | 只有部分数据库 connector 通过 |
+| `blocked` | 缺少镜像、依赖或其他本地条件 |
+| `security_blocked` | 同版本的官方制品身份发生异常变化 |
+
+检查过程不读取业务项目或 macOS Keychain，也不连接 UAT、生产环境和其他私有数据库。详细命令、定期检查方式和旧版项目升级工具见 [maintainer/README.md](maintainer/README.md)。
+
+## 测试
+
+公开 Skill：
 
 ```bash
 cd skills/dbhub-setup/tests
 PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -v
 ```
 
-资格脚本的 Node.js 依赖锁定在：
+仓库级资格工具：
 
-```text
-skills/dbhub-setup/qualification/package-lock.json
+```bash
+cd maintainer/tests
+PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -v
 ```
 
-完整资格矩阵需要本地 Docker 和清单中已经存在的精确镜像，不会隐式拉取镜像。
+GitHub Actions 会运行这两组测试。完整数据库矩阵不会在普通单元测试中启动。
 
-## 其他平台如何适配
+## 已验证范围
 
-可以把整个 Skill 交给目标 Agent，并明确要求：
+| 项目 | 状态 |
+| --- | --- |
+| macOS | 已验证 |
+| OpenAI Codex | 已验证 |
+| DBHub `1.2.0` | 已验证 |
+| 多环境、多数据库项目配置 | 已验证 |
+| macOS Keychain 凭据加载 | 已验证 |
+| SQLite、PostgreSQL、MySQL、MariaDB、SQL Server 资格矩阵 | 已验证 |
+| Windows / Linux 凭据存储 | 未验证 |
+| Claude Code / Cursor / 其他 Agent | 未验证 |
 
-```text
-保留 DBHub Setup Skill 的 fail-closed、安全输出和 dry-run 边界，
-将 macOS Keychain 替换为当前操作系统的安全凭据存储，
-将 Codex 项目级 MCP 配置替换为当前 Agent 的配置格式，
-补充对应平台的测试后再宣称支持。
-```
+## 移植到其他平台
 
-不要简单删除 Keychain 检查，或把密码降级保存到仓库文件、Shell 历史、命令参数和 AI 会话中。
+移植时，凭据仍要交给系统安全存储；配置先 dry-run，真实数据库连接单独授权。之后再把 Keychain 和 Codex 项目配置换成目标平台的实现。
 
 ## 项目说明
 

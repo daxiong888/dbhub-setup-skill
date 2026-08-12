@@ -48,8 +48,6 @@ class SetupDbhubProjectTest(unittest.TestCase):
             "uat|mysql|uat.example|3306|app_db|root|UAT",
             "--keychain-service",
             "codex.dbhub.test-project",
-            "--dbhub-version",
-            "1.0.0",
             *extra,
         ]
 
@@ -99,24 +97,25 @@ class SetupDbhubProjectTest(unittest.TestCase):
         self.assertIn("add-generic-password", launcher)
         self.assertNotIn("display dialog", launcher)
         self.assertNotIn("prompt_for_password", launcher)
-        self.assertIn("run_qualified_dbhub.py", launcher)
-        self.assertIn("--version 1.0.0", launcher)
-        self.assertIn("--validate-config", launcher)
+        self.assertIn("@bytebase/dbhub@1.2.0", launcher)
+        self.assertIn("--registry=https://registry.npmjs.org", launcher)
+        self.assertIn("--ignore-scripts", launcher)
+        self.assertIn("EXPECTED_CONFIG_SHA256", launcher)
         self.assertIn(
             hashlib.sha256(dbhub_config.encode("utf-8")).hexdigest(),
             launcher,
         )
-        self.assertNotIn("exec npx", launcher)
+        self.assertNotIn("run_qualified_dbhub.py", launcher)
+        self.assertNotIn("QUALIFICATION", launcher)
         self.assertNotIn("DBHUB_CONFIG_PATH", launcher)
         self.assertNotIn("DBHUB_KEYCHAIN_SERVICE", launcher)
-        self.assertNotIn("DBHUB_QUALIFIED_RUNNER", launcher)
-        self.assertNotIn("DBHUB_QUALIFICATION_STATE_DIR", launcher)
         self.assertLess(
-            launcher.index("--validate-config"),
+            launcher.index("config hash does not match"),
             launcher.rindex("\nload_all_passwords\n"),
         )
-        self.assertEqual(summary["dbhub_version"], "1.0.0")
-        self.assertEqual(summary["runtime_mode"], "qualified")
+        self.assertEqual(summary["dbhub_version"], "1.2.0")
+        self.assertTrue(summary["dbhub_version_verified"])
+        self.assertEqual(summary["runtime_mode"], "npx-exact")
 
         self.assertEqual(
             stat.S_IMODE((self.project_root / ".codex/config.toml").stat().st_mode),
@@ -255,7 +254,7 @@ class SetupDbhubProjectTest(unittest.TestCase):
             encoding="utf-8"
         )
         self.assertIn("PROD $SAFE", dbhub_config)
-        self.assertIn("run_qualified_dbhub.py", launcher)
+        self.assertIn("@bytebase/dbhub@1.0.0", launcher)
 
     def test_rejects_launcher_registry_override(self) -> None:
         result = subprocess.run(
@@ -268,7 +267,7 @@ class SetupDbhubProjectTest(unittest.TestCase):
             text=True,
         )
         self.assertNotEqual(result.returncode, 0)
-        self.assertIn("manage_dbhub_release.py", result.stderr)
+        self.assertIn("official npm registry", result.stderr)
 
     def test_rejects_non_exact_dbhub_version(self) -> None:
         result = subprocess.run(
@@ -279,6 +278,17 @@ class SetupDbhubProjectTest(unittest.TestCase):
         )
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("exact stable semver", result.stderr)
+
+    def test_marks_an_explicit_nonverified_version(self) -> None:
+        result = subprocess.run(
+            self.command("--dbhub-version", "1.1.0", "--dry-run"),
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        summary = json.loads(result.stdout)
+        self.assertEqual(summary["dbhub_version"], "1.1.0")
+        self.assertFalse(summary["dbhub_version_verified"])
 
     def test_uses_requested_mysql_timezone(self) -> None:
         subprocess.run(
@@ -397,6 +407,23 @@ class SetupDbhubProjectTest(unittest.TestCase):
         )
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("different type, host, port, or user", result.stderr)
+
+
+class PublicSkillBoundaryTest(unittest.TestCase):
+    def test_does_not_bundle_maintainer_release_tooling(self) -> None:
+        excluded_paths = [
+            SKILL_ROOT / ".DS_Store",
+            SKILL_ROOT / "qualification",
+            SKILL_ROOT / "scripts" / "dbhub_release_matrix.json",
+            SKILL_ROOT / "scripts" / "manage_dbhub_release.py",
+            SKILL_ROOT / "scripts" / "qualify_dbhub_release.mjs",
+            SKILL_ROOT / "scripts" / "run_qualified_dbhub.py",
+            SKILL_ROOT / "scripts" / "upgrade_dbhub_project.py",
+        ]
+        self.assertEqual(
+            [str(path.relative_to(SKILL_ROOT)) for path in excluded_paths if path.exists()],
+            [],
+        )
 
 
 if __name__ == "__main__":
